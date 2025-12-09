@@ -2,7 +2,6 @@
 API Python para Conciliação com IA
 Exemplo usando FastAPI
 """
-
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
@@ -12,10 +11,32 @@ from datetime import datetime
 from tools.financeiro import normalizar_planilha_financeira
 from tools.contabilidade import normalizar_planilha_contabilidade
 from tools.calc_diferencas import calcular_diferencas
+from routers.empresa_router import router as empresa_router
+from routers.planodecontas_router import router as plano_router
+from routers.conciliacao_router import router as conciliacao_router
+from routers.arquivo_router import router as arquivo_router
+from db import engine
+from models import Base
 
+app = FastAPI()
 
-app = FastAPI(title="API Conciliação IA")
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# Routers
+app.include_router(empresa_router)
+app.include_router(plano_router)
+app.include_router(conciliacao_router)
+app.include_router(arquivo_router)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 origins = [
     "https://conciliacao-app-production.up.railway.app",
