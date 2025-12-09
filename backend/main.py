@@ -16,14 +16,20 @@ from tools.calc_diferencas import calcular_diferencas
 
 app = FastAPI(title="API Conciliação IA")
 
-# Configurar CORS
+
+origins = [
+    "https://conciliacao-app-production.up.railway.app",
+    "http://localhost:3000",  # opcional p/ testes locais
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 UPLOAD_DIR = "/tmp/conciliacao"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
