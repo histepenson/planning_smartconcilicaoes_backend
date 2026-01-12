@@ -25,8 +25,18 @@ export default function ListaEmpresas() {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [ordenacao, setOrdenacao] = useState({ campo: 'nome', direcao: 'asc' });
 
+
+
+
+
 const buscarEmpresas = useCallback(async () => {
   setIsLoading(true);
+
+
+console.log("API_URL =", API_URL);
+const url = `${API_URL}/empresas`;
+console.log("URL FINAL CHAMADA =", url);
+
 
   try {
     const response = await fetch(`${API_URL}/empresas`, {
