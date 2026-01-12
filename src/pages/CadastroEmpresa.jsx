@@ -76,8 +76,11 @@ export default function CadastroEmpresa() {
   // SUBMIT
   // ============================================================
   const onSubmit = async (data) => {
+
+    const API_URL = import.meta.env.VITE_API_URL;
+
     try {
-      const response = await fetch("http://localhost:8000/empresas/", {
+const response = await fetch(`${API_URL}/empresas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
