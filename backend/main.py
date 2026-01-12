@@ -35,7 +35,7 @@ async def no_cache_middleware(request, call_next):
 origins = [
     #"http://localhost:3000",
     #"http://localhost:8000",  # Vite
-    "https://conciliacao-app-production.up.railway.app",
+    "https://conciliacao-app-production.up.railway.app/api",
 ]
 
 
