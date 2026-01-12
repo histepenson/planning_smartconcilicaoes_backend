@@ -51,7 +51,8 @@ export default function PlanoContasPage() {
                 toast.error('⚠️ Nenhuma empresa cadastrada! Cadastre uma empresa primeiro.');
             }
         } catch (error) {
-            toast.error('Erro ao carregar empresas');
+            toast.error(`Erro ao carregar empresas: ${error.response?.data?.detail || error.message}`);
+
             setEmpresas([]);
         }
     }, [empresaId]);
