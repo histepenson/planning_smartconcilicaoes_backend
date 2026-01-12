@@ -47,7 +47,7 @@ export default function ListaEmpresas() {
       } else if (error.name === 'AbortError') {
         toast.error('❌ Requisição cancelada.');
       } else {
-        toast.error(`Erro ao carregar empresas: ${error.message}`);
+        toast.error(`Erro ao carregar empresas: ${error.response?.data?.detail || error.message}`);
       }
       setEmpresas([]);
       setEmpresasFiltradas([]);
