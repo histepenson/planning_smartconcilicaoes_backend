@@ -38,17 +38,42 @@ export default function ListaEmpresas() {
         throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      setEmpresas(Array.isArray(data) ? data : []);
-      setEmpresasFiltradas(Array.isArray(data) ? data : []);
-    } catch (error) {
-      if (error.name === 'TimeoutError') {
-        toast.error('⏱️ Tempo de requisição excedido. Tente novamente.');
-      } else if (error.name === 'AbortError') {
-        toast.error('❌ Requisição cancelada.');
-      } else {
-        toast.error(`Erro ao carregar empresas: ${error.response?.data?.detail || error.message}`);
-      }
+   try {
+  const response = await fetch(`${API_URL}/empresas/`, {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+    },
+  });
+
+  // 🔴 valida status HTTP
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status} - ${text}`);
+  }
+
+  // 🔴 valida se é JSON
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(`Resposta não é JSON: ${text}`);
+  }
+
+  const data = await response.json();
+
+  setEmpresas(Array.isArray(data) ? data : []);
+  setEmpresasFiltradas(Array.isArray(data) ? data : []);
+
+} catch (error) {
+  console.error("ERRO REAL:", error);
+
+  toast.error(
+    error.message.includes("Resposta não é JSON")
+      ? "Erro no servidor (resposta inválida)"
+      : `Erro ao carregar empresas: ${error.message}`
+  );
+}
+
       setEmpresas([]);
       setEmpresasFiltradas([]);
     } finally {
