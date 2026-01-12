@@ -25,61 +25,51 @@ export default function ListaEmpresas() {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [ordenacao, setOrdenacao] = useState({ campo: 'nome', direcao: 'asc' });
 
-  // Buscar empresas com melhor tratamento de erro
-  const buscarEmpresas = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/empresas/`, {
-        signal: AbortSignal.timeout(10000)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
-      }
-      
-   try {
-  const response = await fetch(`${API_URL}/empresas/`, {
-    method: "GET",
-    headers: {
-      "Accept": "application/json",
-    },
-  });
+const buscarEmpresas = useCallback(async () => {
+  setIsLoading(true);
 
-  // 🔴 valida status HTTP
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`HTTP ${response.status} - ${text}`);
-  }
+  try {
+    const response = await fetch(`${API_URL}/empresas`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
 
-  // 🔴 valida se é JSON
-  const contentType = response.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
-    const text = await response.text();
-    throw new Error(`Resposta não é JSON: ${text}`);
-  }
-
-  const data = await response.json();
-
-  setEmpresas(Array.isArray(data) ? data : []);
-  setEmpresasFiltradas(Array.isArray(data) ? data : []);
-
-} catch (error) {
-  console.error("ERRO REAL:", error);
-
-  toast.error(
-    error.message.includes("Resposta não é JSON")
-      ? "Erro no servidor (resposta inválida)"
-      : `Erro ao carregar empresas: ${error.message}`
-  );
-}
-
-      setEmpresas([]);
-      setEmpresasFiltradas([]);
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status} - ${text}`);
     }
-  }, []);
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      throw new Error(`Resposta não é JSON: ${text}`);
+    }
+
+    const data = await response.json();
+
+    const lista = Array.isArray(data) ? data : [];
+    setEmpresas(lista);
+    setEmpresasFiltradas(lista);
+
+  } catch (error) {
+    console.error("ERRO REAL:", error);
+
+    toast.error(
+      error.message.includes("Resposta não é JSON")
+        ? "Erro no servidor (rota da API não encontrada)"
+        : `Erro ao carregar empresas: ${error.message}`
+    );
+
+    setEmpresas([]);
+    setEmpresasFiltradas([]);
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
+
 
   useEffect(() => {
     buscarEmpresas();
