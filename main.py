@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.empresa_router import router as empresa_router
+from routers.planodecontas_router import router as planodecontas_router
+from routers.conciliacao_router import router as conciliacao_router
+from routers.arquivo_router import router as arquivo_router
 
 app = FastAPI(
     title="Conciliação API",
@@ -27,3 +30,6 @@ app.add_middleware(
 )
 
 app.include_router(empresa_router, prefix="/api")
+app.include_router(planodecontas_router, prefix="/api")
+app.include_router(conciliacao_router, prefix="/api")
+app.include_router(arquivo_router, prefix="/api")

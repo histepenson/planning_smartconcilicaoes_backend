@@ -31,7 +31,7 @@ class PlanoDeContas(Base):
     conciliavel = Column(Boolean, default=False, nullable=False)
     descricao = Column(String(255), nullable=True)
 
-    # 🔹 SEM FK | apenas referência lógica (ex: "1", "1.01", "1.01.02")
+    # SEM FK | apenas referencia logica (ex: "1", "1.01", "1.01.02")
     conta_superior = Column(String(50), nullable=True, index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

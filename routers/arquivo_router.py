@@ -59,7 +59,7 @@ def criar_arquivo(
 ):
     """Cria um novo registro de arquivo"""
     
-    # ✅ Converte schema Pydantic para modelo SQLAlchemy
+    # Converte schema Pydantic para modelo SQLAlchemy
     db_arquivo = ArquivoConciliacao(**arquivo.model_dump())
     
     db.add(db_arquivo)

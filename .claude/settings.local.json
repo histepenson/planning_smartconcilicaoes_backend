@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\conciliacao-app\\\\src\\\\api\")",
+      "Bash(timeout:*)",
+      "Bash(test:*)",
+      "Bash(.venv/Scripts/python.exe -m uvicorn:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(node --check:*)",
+      "Bash(.venvScriptsactivate)",
+      "Bash(uvicorn main:app:*)"
+    ]
+  }
+}

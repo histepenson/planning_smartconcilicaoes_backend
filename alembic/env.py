@@ -24,7 +24,7 @@ target_metadata = Base.metadata
 
 
 # ============================================================
-# 🔒 FILTRO ABSOLUTO: SOMENTE schema = concilia
+# FILTRO ABSOLUTO: SOMENTE schema = concilia
 # ============================================================
 def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table":
@@ -43,7 +43,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_schemas=True,
-        include_object=include_object,      # ✅ AQUI
+        include_object=include_object,      # AQUI
         compare_type=True,
         compare_metadata=False,
         version_table_schema="concilia",
@@ -67,7 +67,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             include_schemas=True,
-            include_object=include_object,    # ✅ AQUI
+            include_object=include_object,    # AQUI
             version_table_schema="concilia",
             compare_type=True,
             compare_server_default=True,

@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import re
 
 
@@ -24,19 +24,25 @@ def normalizar_planilha_contabilidade(entrada):
         raise ValueError("entrada deve ser DataFrame ou caminho de arquivo")
 
     # ==========================
-    # 2️⃣ MAPEAR COLUNAS (DIRETO)
+    # 2️⃣ MAPEAR COLUNAS (FLEXÍVEL)
     # ==========================
-    col_codigo = None
-    col_cliente = None
-    col_valor = None
+    def normalizar_nome(col: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "_", str(col).strip().lower()).strip("_")
 
-    for col in df.columns:
-        if col.lower().startswith("codigo"):
-            col_codigo = col
-        if col.lower().startswith("descricao"):
-            col_cliente = col
-        if col.lower() == "saldo atual":
-            col_valor = col
+    colunas_norm = [(col, normalizar_nome(col)) for col in df.columns]
+
+    codigo_cols = [col for col, norm in colunas_norm if norm.startswith("codigo")]
+    descricao_cols = [col for col, norm in colunas_norm if norm.startswith("descricao")]
+    saldo_cols = [
+        col
+        for col, norm in colunas_norm
+        if norm == "saldo_atual" or norm.startswith("saldo_atual")
+    ]
+
+    # Quando há duplicidade de Codigo/Descricao, a primeira costuma ser a conta contábil.
+    col_codigo = codigo_cols[1] if len(codigo_cols) > 1 else (codigo_cols[0] if codigo_cols else None)
+    col_cliente = descricao_cols[1] if len(descricao_cols) > 1 else (descricao_cols[0] if descricao_cols else None)
+    col_valor = saldo_cols[0] if saldo_cols else None
 
     if not col_codigo or not col_valor:
         raise ValueError(
@@ -47,33 +53,94 @@ def normalizar_planilha_contabilidade(entrada):
     # 3️⃣ NORMALIZAR
     # ==========================
     df_norm = pd.DataFrame()
-    df_norm["codigo"] = df[col_codigo]
+    df_norm["codigo_raw"] = df[col_codigo]
     df_norm["cliente"] = df[col_cliente] if col_cliente else None
 
     # ==========================
-    # 4️⃣ CONVERTER VALOR
+    # 4️⃣ NORMALIZAR CÓDIGO (ALINHAR COM FINANCEIRO)
     # ==========================
-    def converter_valor(v):
+    def normalizar_codigo(v: object) -> str:
+        if pd.isna(v):
+            return ""
+        s = str(v).strip()
+        if not s:
+            return ""
+
+        # Remove tudo que não for dígito
+        digitos = re.sub(r"\D+", "", s)
+        if not digitos:
+            return ""
+
+        # Esperado no financeiro: base 6 + loja 2
+        if len(digitos) >= 8:
+            base = digitos[:6]
+            loja = digitos[6:8]
+        elif len(digitos) >= 6:
+            base = digitos[:6]
+            loja = "00"
+        else:
+            base = digitos.zfill(6)
+            loja = "00"
+
+        return f"C{base}{loja}"
+
+    df_norm["codigo"] = df_norm["codigo_raw"].apply(normalizar_codigo)
+
+    # ==========================
+    # 5️⃣ CONVERTER VALOR
+    # ==========================
+    def converter_valor(v: object) -> float:
         if pd.isna(v):
             return 0.0
-        v = str(v).replace(".", "").replace(",", ".")
-        try:
+        if isinstance(v, (int, float)):
             return float(v)
-        except:
+
+        s = str(v).strip()
+        if not s:
+            return 0.0
+
+        negativo = False
+        if s.startswith("(") and s.endswith(")"):
+            negativo = True
+            s = s[1:-1]
+        if s.endswith("-"):
+            negativo = True
+            s = s[:-1]
+
+        s_upper = s.upper()
+        if s_upper.endswith("D") or s_upper.endswith("C"):
+            sufixo = s_upper[-1]
+            s = s[:-1]
+            if sufixo == "C":
+                negativo = True
+
+        s = (
+            s.replace("\u00a0", "")
+            .replace(" ", "")
+            .replace(".", "")
+            .replace(",", ".")
+        )
+
+        try:
+            valor = float(s)
+            return -valor if negativo else valor
+        except Exception:
             return 0.0
 
     df_norm["valor"] = df[col_valor].apply(converter_valor)
 
     # ==========================
-    # 5️⃣ LIMPAR E AGRUPAR
+    # 6️⃣ LIMPAR E AGRUPAR
     # ==========================
-    df_norm = df_norm[df_norm["codigo"].notna()].copy()
+    df_norm = df_norm[df_norm["codigo"].astype(str).str.len() > 0].copy()
 
+    # IMPORTANTE: agrupar apenas por codigo evita duplicação no merge por codigo
     df_agrupado = (
-        df_norm
-        .groupby(["codigo", "cliente"], dropna=False)
-        .agg({"valor": "sum"})
-        .reset_index()
+        df_norm.groupby(["codigo"], dropna=False, as_index=False)
+        .agg(
+            cliente=("cliente", "first"),
+            valor=("valor", "sum"),
+        )
     )
 
     return df_agrupado

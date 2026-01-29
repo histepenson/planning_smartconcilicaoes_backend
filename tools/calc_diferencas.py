@@ -27,7 +27,7 @@ def calcular_diferencas(df_financeiro: pd.DataFrame, df_contabilidade: pd.DataFr
         - 'caminho_arquivo': Caminho do arquivo salvo (se salvar_arquivo=True)
     """
     
-    print("📊 Calculando diferenças...")
+    print("[INFO] Calculando diferencas...")
     
     # Padronizar nomes das colunas
     df_fin = df_financeiro.copy()
@@ -121,9 +121,9 @@ def calcular_diferencas(df_financeiro: pd.DataFrame, df_contabilidade: pd.DataFr
         'valor_total_contabilidade': df_resultado['Valor Contabilidade'].sum()
     }
     
-    print(f"   ✓ Total de registros analisados: {resumo['total_registros']}")
-    print(f"   ✓ Registros com diferença: {resumo['registros_com_diferenca']}")
-    print(f"   ✓ Diferença total: R$ {resumo['diferenca_total']:,.2f}")
+    print(f"   [OK] Total de registros analisados: {resumo['total_registros']}")
+    print(f"   [OK] Registros com diferenca: {resumo['registros_com_diferenca']}")
+    print(f"   [OK] Diferenca total: R$ {resumo['diferenca_total']:,.2f}")
     
     # Salvar arquivo se solicitado
     caminho_arquivo = None
@@ -135,11 +135,11 @@ def calcular_diferencas(df_financeiro: pd.DataFrame, df_contabilidade: pd.DataFr
             caminho_arquivo = caminho_saida
         
         # Criar arquivo Excel com múltiplas abas
-        print(f"\n💾 Salvando arquivo: {caminho_arquivo}")
+        print(f"\n[INFO] Salvando arquivo: {caminho_arquivo}")
         
         with pd.ExcelWriter(caminho_arquivo, engine='openpyxl') as writer:
-            # Aba 1: Todas as diferenças
-            df_resultado.to_excel(writer, sheet_name='Todas Diferenças', index=False)
+            # Aba 1: Total das diferenças
+            df_resultado.to_excel(writer, sheet_name='Total das Diferenças', index=False)
             
             # Aba 2: Apenas com diferenças significativas
             df_com_dif = df_resultado[df_resultado['Diferença Absoluta'] > 0.01].copy()
@@ -164,8 +164,8 @@ def calcular_diferencas(df_financeiro: pd.DataFrame, df_contabilidade: pd.DataFr
         # Aplicar formatação
         _formatar_arquivo_excel(caminho_arquivo)
         
-        print(f"   ✓ Arquivo salvo com {len(df_resultado)} registros")
-        print(f"   ✓ Abas criadas: Todas Diferenças, Com Diferenças, Só Financeiro, Só Contabilidade, Resumo")
+        print(f"   [OK] Arquivo salvo com {len(df_resultado)} registros")
+        print(f"   [OK] Abas criadas: Total das Diferencas, Com Diferencas, So Financeiro, So Contabilidade, Resumo")
     
     return {
         'df_completo': df_resultado,
