@@ -13,7 +13,9 @@
       "Bash(python:*)",
       "Bash(node --check:*)",
       "Bash(.venvScriptsactivate)",
-      "Bash(uvicorn main:app:*)"
+      "Bash(uvicorn main:app:*)",
+      "Bash(npm start)",
+      "Bash(./venv/Scripts/python:*)"
     ]
   }
 }

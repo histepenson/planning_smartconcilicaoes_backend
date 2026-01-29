@@ -181,9 +181,30 @@ def _normalizar_financeiro_base(entrada: object) -> pd.DataFrame:
         "vencimento",
     ])
 
-    col_emissao = _encontrar_coluna_por_substrings(df, ["data", "emissao"]) or _encontrar_coluna_por_substrings(
-        df, ["dt", "emissao"]
-    )
+    if "data_de_emissao" in df.columns:
+        col_emissao = "data_de_emissao"
+    elif "data_emissao" in df.columns:
+        col_emissao = "data_emissao"
+    else:
+        col_emissao = (
+        _encontrar_coluna_por_substrings(df, ["data", "emissao"])
+        or _encontrar_coluna_por_substrings(df, ["data", "de", "emissao"])
+        or _encontrar_coluna_por_substrings(df, ["dt", "emissao"])
+        or _encontrar_coluna_por_substrings(df, ["data", "emiss"])
+        or _encontrar_coluna_por_substrings(df, ["data", "de", "emiss"])
+        or _encontrar_coluna_por_substrings(df, ["dt", "emiss"])
+        or _encontrar_coluna_por_substrings(df, ["emiss"])
+        )
+    if "prf_numero" in df.columns:
+        col_prf_numero = "prf_numero"
+    else:
+        col_prf_numero = _encontrar_coluna_por_substrings(df, ["prf", "numero"]) or _encontrar_coluna_por_substrings(
+            df, ["prf", "num"]
+        )
+    if "parcela" in df.columns:
+        col_parcela = "parcela"
+    else:
+        col_parcela = _encontrar_coluna_por_substrings(df, ["parcela"])
 
     # ==========================
     # NORMALIZAR CLIENTE E CÓDIGO
@@ -225,9 +246,17 @@ def _normalizar_financeiro_base(entrada: object) -> pd.DataFrame:
     # ==========================
     df["data_vencimento"] = pd.to_datetime(df[col_vencimento], errors="coerce")
     if col_emissao:
-        df["data_emissao"] = pd.to_datetime(df[col_emissao], errors="coerce")
+        df["data_emissao"] = df[col_emissao]
     else:
         df["data_emissao"] = pd.NaT
+    if col_prf_numero:
+        df["prf_numero"] = df[col_prf_numero]
+    else:
+        df["prf_numero"] = None
+    if col_parcela:
+        df["parcela"] = df[col_parcela]
+    else:
+        df["parcela"] = None
     hoje = datetime.now()
     df["dias_vencidos"] = (hoje - df["data_vencimento"]).dt.days
 
@@ -241,7 +270,9 @@ def _normalizar_financeiro_base(entrada: object) -> pd.DataFrame:
 
 def normalizar_planilha_financeira_detalhada(entrada: object) -> pd.DataFrame:
     df = _normalizar_financeiro_base(entrada)
-    return df[["codigo", "cliente", "valor", "data_emissao", "data_vencimento"]].copy()
+    return df[
+        ["codigo", "cliente", "valor", "data_emissao", "data_vencimento", "prf_numero", "parcela"]
+    ].copy()
 
 
 def normalizar_planilha_financeira(entrada):

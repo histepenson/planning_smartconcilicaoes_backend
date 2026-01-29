@@ -232,9 +232,13 @@ class AnaliseDiferencasService:
                 matches_razao_count = int(
                     (df_razao_geral_norm["itemconta_normalizado"] == codigo_normalizado).sum()
                 )
-                if matches_razao_count == 0 and abs(diferenca) > 0.01:
+                if (
+                    matches_razao_count == 0
+                    and abs(diferenca) > 0.01
+                    and tipo == "SO_CONTABILIDADE"
+                ):
                     sem_lancamentos_razao = True
-                    nota_razao = "Sem lançamentos no razão geral no período analisado."
+                    nota_razao = "Sem lançamentos no período."
             if tipo == "SO_CONTABILIDADE" and lancamentos_razao_geral:
                 codigo_normalizado = self._normalizar_codigo_numerico(codigo)
                 if df_razao_geral_norm is not None and col_itemconta_geral:
@@ -407,7 +411,37 @@ class AnaliseDiferencasService:
                 for _, r in matches_fin.iterrows():
                     cliente = str(r.get("cliente", "")).strip()
                     valor_fin_det = float(r.get("valor", 0) or 0)
-                    data_venc = r.get("data_vencimento", "")
+                    data_emissao = r.get("data_emissao", "")
+                    prf_numero = r.get("prf_numero", "")
+                    parcela = r.get("parcela", "")
+
+                    doc_parts = []
+                    prf_str = ""
+                    parcela_str = ""
+                    def _normalizar_doc(valor: object) -> str:
+                        if valor in [None, ""] or pd.isna(valor):
+                            return ""
+                        s = str(valor).strip()
+                        s_clean = s.strip("- ")
+                        if re.search(r"[A-Za-z]", s_clean):
+                            return s_clean
+                        digits = re.sub(r"\D+", "", s_clean)
+                        if len(digits) == 9:
+                            return digits
+                        return s_clean
+
+                    if prf_numero not in [None, ""] and not pd.isna(prf_numero):
+                        prf_str = _normalizar_doc(prf_numero)
+                        if prf_str:
+                            doc_parts.append(prf_str)
+                    if parcela not in [None, ""] and not pd.isna(parcela):
+                        parcela_str = _normalizar_doc(parcela)
+                        if parcela_str and parcela_str != prf_str:
+                            if prf_str and parcela_str in prf_str:
+                                pass
+                            else:
+                                doc_parts.append(parcela_str)
+                    documento = "-".join(doc_parts)
 
                     lancamentos_financeiro_detalhes.append(
                         {
@@ -415,8 +449,8 @@ class AnaliseDiferencasService:
                             "descricao_conta": cliente,
                             "valor": round(valor_fin_det, 2),
                             "tipo_lancamento": "",
-                            "data_lancamento": self._formatar_data(data_venc),
-                            "documento": "",
+                            "data_lancamento": self._formatar_data(data_emissao),
+                            "documento": documento,
                             "historico": "",
                             "tipo_movimento": "NAO_IDENTIFICADO",
                         }
