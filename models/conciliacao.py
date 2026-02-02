@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, text 
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db import Base
@@ -16,6 +17,13 @@ class Conciliacao(Base):
     conta_contabil_id = Column(Integer, ForeignKey("concilia.plano_contas.id"), nullable=False, index=True)
     periodo = Column(String(20), nullable=False, index=True)  # Ex: "2025-01" ou "01/2025"
     saldo = Column(DECIMAL(18, 2), nullable=False, default=0)
+
+    # Colunas de Efetivação
+    status = Column(String(20), nullable=False, default="PROCESSADA", index=True)  # PROCESSADA, EFETIVADA
+    usuario_responsavel_id = Column(Integer, ForeignKey("concilia.usuario.id"), nullable=True, index=True)
+    data_efetivacao = Column(DateTime(timezone=True), nullable=True)
+    resultado_json = Column(JSONB, nullable=True)  # Resultado completo da conciliação
+    caminhos_arquivos = Column(JSONB, nullable=True)  # Paths dos arquivos salvos
 
     # Timestamps - padrão snake_case
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"), nullable=False)
@@ -43,6 +51,12 @@ class Conciliacao(Base):
         back_populates="conciliacao",
         uselist=False,  # Relacionamento 1:1
         cascade="all, delete-orphan"
+    )
+
+    # N conciliações → 1 usuário responsável (efetivação)
+    usuario_responsavel = relationship(
+        "Usuario",
+        foreign_keys=[usuario_responsavel_id]
     )
 
     def __repr__(self):

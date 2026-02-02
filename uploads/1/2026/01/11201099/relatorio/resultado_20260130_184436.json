@@ -1,0 +1,64 @@
+{
+  "resumo": {
+    "total_origem": 13754,
+    "total_destino": 13754,
+    "diferenca": 0,
+    "situacao": "CONCILIADO",
+    "percentual_divergencia": 0,
+    "quantidade_registros_origem": 2,
+    "quantidade_registros_destino": 2,
+    "data_processamento": "2026-01-30T18:44:24.700584"
+  },
+  "resumo_analise": {
+    "total_registros": 2,
+    "total": 2,
+    "conciliados": 2,
+    "divergentes": 0,
+    "percentual_conciliacao": 100,
+    "percentual": 100
+  },
+  "diferencas": [],
+  "diferencas_origem_maior": [],
+  "diferencas_contabilidade_maior": [],
+  "analise_detalhada": [
+    {
+      "codigo": "C00019601",
+      "nome": "C00019601",
+      "conta_contabil": "11201099",
+      "valor_financeiro": 12844,
+      "valor_contabilidade": 12844,
+      "diferenca": 0,
+      "tipo_diferenca": "CONCILIADO",
+      "status": "verde",
+      "lancamentos_razao": 0,
+      "lancamentos_razao_detalhes": [],
+      "lancamentos_financeiro_detalhes": [],
+      "sem_lancamentos_razao": false,
+      "nota_razao": ""
+    },
+    {
+      "codigo": "C00024401",
+      "nome": "C00024401",
+      "conta_contabil": "11201099",
+      "valor_financeiro": 910,
+      "valor_contabilidade": 910,
+      "diferenca": 0,
+      "tipo_diferenca": "CONCILIADO",
+      "status": "verde",
+      "lancamentos_razao": 0,
+      "lancamentos_razao_detalhes": [],
+      "lancamentos_financeiro_detalhes": [],
+      "sem_lancamentos_razao": false,
+      "nota_razao": ""
+    }
+  ],
+  "observacoes": [
+    "Total de 0 registros onde origem > contabilidade",
+    "Total de 0 registros onde contabilidade > origem",
+    "Percentual de divergência: 0.00%",
+    "Total de 0 registros SO_CONTABILIDADE analisados em profundidade"
+  ],
+  "alertas": [
+    "✅ Diferenças dentro do esperado"
+  ]
+}

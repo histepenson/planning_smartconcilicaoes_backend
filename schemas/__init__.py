@@ -15,6 +15,40 @@ from .conciliacao_schema import (
     RelatorioConsolidacao
 )
 
+from .auth_schema import (
+    LoginRequest,
+    LoginResponse,
+    RefreshTokenRequest,
+    TokenResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+    ChangePasswordRequest,
+    SelectEmpresaRequest,
+    SelectEmpresaResponse,
+    UserInfo,
+    UserMe,
+    EmpresaInfo,
+    PerfilInfo,
+)
+
+from .user_schema import (
+    UsuarioCreate,
+    UsuarioUpdate,
+    UsuarioUpdatePassword,
+    UsuarioOut,
+    UsuarioListOut,
+    UsuarioDetailOut,
+    UsuarioEmpresaCreate,
+    UsuarioEmpresaUpdate,
+    UsuarioEmpresaOut,
+    PerfilCreate,
+    PerfilUpdate,
+    PerfilOut,
+    PaginatedResponse,
+    UsuariosPaginatedResponse,
+)
 
 from .arquivo_conciliacao_schema import (
     ArquivoConciliacaoCreate,
@@ -35,4 +69,37 @@ __all__ = [
 
     "ArquivoConciliacaoCreate",
     "ArquivoConciliacaoResponse",
+
+    # Auth schemas
+    "LoginRequest",
+    "LoginResponse",
+    "RefreshTokenRequest",
+    "TokenResponse",
+    "ForgotPasswordRequest",
+    "ForgotPasswordResponse",
+    "ResetPasswordRequest",
+    "ResetPasswordResponse",
+    "ChangePasswordRequest",
+    "SelectEmpresaRequest",
+    "SelectEmpresaResponse",
+    "UserInfo",
+    "UserMe",
+    "EmpresaInfo",
+    "PerfilInfo",
+
+    # User/Perfil schemas
+    "UsuarioCreate",
+    "UsuarioUpdate",
+    "UsuarioUpdatePassword",
+    "UsuarioOut",
+    "UsuarioListOut",
+    "UsuarioDetailOut",
+    "UsuarioEmpresaCreate",
+    "UsuarioEmpresaUpdate",
+    "UsuarioEmpresaOut",
+    "PerfilCreate",
+    "PerfilUpdate",
+    "PerfilOut",
+    "PaginatedResponse",
+    "UsuariosPaginatedResponse",
 ]

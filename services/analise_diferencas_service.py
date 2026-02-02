@@ -52,6 +52,19 @@ class AnaliseDiferencasService:
             valor_contabilidade=("valor", "sum"),
         )
 
+        # Criar mapa de código -> nome do cliente para uso em todos os lançamentos
+        codigo_nome_map: Dict[str, str] = {}
+        for _, row in df_fin.iterrows():
+            cod = str(row.get("codigo", "")).strip()
+            nome = str(row.get("cliente", "")).strip()
+            if cod and nome and nome != cod:
+                codigo_nome_map[cod] = nome
+        for _, row in df_cont.iterrows():
+            cod = str(row.get("codigo", "")).strip()
+            nome = str(row.get("cliente", "")).strip()
+            if cod and nome and nome != cod and cod not in codigo_nome_map:
+                codigo_nome_map[cod] = nome
+
         if not df_razao.empty and "codigo" in df_razao.columns:
             razao_agg = df_razao.groupby("codigo", as_index=False).agg(
                 lancamentos_razao=("codigo", "count"),
@@ -294,12 +307,13 @@ class AnaliseDiferencasService:
                         if _tem_match_financeiro(codigo, data_lanc, valor_lancamento):
                             continue
 
+                        # Obter nome do cliente do mapa
+                        nome_cliente = codigo_nome_map.get(codigo, "")
+
                         lancamentos_razao_detalhes.append(
                             {
                                 "conta_origem": item_conta,
-                                "descricao_conta": f"Item: {item_conta}"
-                                if item_conta
-                                else "",
+                                "descricao_conta": nome_cliente if nome_cliente else "",
                                 "valor": round(valor_lancamento, 2),
                                 "tipo_lancamento": tipo_lancamento,
                                 "data_lancamento": data_lanc,
@@ -376,12 +390,13 @@ class AnaliseDiferencasService:
                         if col_itemconta_geral
                         else ""
                     )
+                    # Obter nome do cliente do mapa
+                    nome_cliente = codigo_nome_map.get(codigo, "")
+
                     lancamentos_razao_sem_financeiro.append(
                         {
                             "conta_origem": item_conta,
-                            "descricao_conta": f"Item: {item_conta}"
-                            if item_conta
-                            else "",
+                            "descricao_conta": nome_cliente if nome_cliente else "",
                             "valor": round(valor_lancamento, 2),
                             "tipo_lancamento": tipo_lancamento,
                             "data_lancamento": data_lanc,
@@ -502,12 +517,13 @@ class AnaliseDiferencasService:
                         if col_itemconta_geral
                         else ""
                     )
+                    # Obter nome do cliente do mapa
+                    nome_cliente = codigo_nome_map.get(codigo, "")
+
                     lancamentos_credito.append(
                         {
                             "conta_origem": item_conta,
-                            "descricao_conta": f"Item: {item_conta}"
-                            if item_conta
-                            else "",
+                            "descricao_conta": nome_cliente if nome_cliente else "",
                             "valor": round(abs(valor_credito), 2),
                             "tipo_lancamento": "C",
                             "data_lancamento": data_lanc,
@@ -1103,9 +1119,7 @@ class AnaliseDiferencasService:
                     origens.append(
                         {
                             "conta_origem": conta_para_exibir,
-                            "descricao_conta": f"Item: {item_conta}"
-                            if item_conta
-                            else "",
+                            "descricao_conta": nome if nome and nome != codigo else "",
                             "valor": round(valor_lancamento, 2),
                             "tipo_lancamento": tipo_lancamento,
                             "data_lancamento": data_lancamento,

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, text 
+# models/empresa.py
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db import Base
@@ -6,9 +7,9 @@ from db import Base
 
 class Empresa(Base):
     """Modelo de Empresa - Nome SINGULAR"""
+
     __tablename__ = "empresa"
     __table_args__ = {"schema": "concilia"}
-
 
     # Colunas
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -19,6 +20,11 @@ class Empresa(Base):
     # Timestamps - padrão snake_case
     created_at = Column(DateTime(timezone=True), server_default=text("NOW()"), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    # Auditoria
+    created_by = Column(Integer, ForeignKey("concilia.usuario.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("concilia.usuario.id"), nullable=True)
+
     # ============================================================
     # RELACIONAMENTOS
     # ============================================================
@@ -28,7 +34,7 @@ class Empresa(Base):
         "PlanoDeContas",
         back_populates="empresa",
         cascade="all, delete-orphan",
-        lazy="dynamic"
+        lazy="dynamic",
     )
 
     # 1 empresa → N conciliações
@@ -36,8 +42,20 @@ class Empresa(Base):
         "Conciliacao",
         back_populates="empresa",
         cascade="all, delete-orphan",
-        lazy="dynamic"
+        lazy="dynamic",
     )
+
+    # 1 empresa → N usuários (via UsuarioEmpresa)
+    usuarios = relationship(
+        "UsuarioEmpresa",
+        back_populates="empresa",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
+
+    # Relacionamento com usuários de auditoria
+    criador = relationship("Usuario", foreign_keys=[created_by])
+    atualizador = relationship("Usuario", foreign_keys=[updated_by])
 
     def __repr__(self):
         return f"<Empresa(id={self.id}, nome='{self.nome}', cnpj='{self.cnpj}')>"

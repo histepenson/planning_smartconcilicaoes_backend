@@ -4,6 +4,12 @@ from routers.empresa_router import router as empresa_router
 from routers.planodecontas_router import router as planodecontas_router
 from routers.conciliacao_router import router as conciliacao_router
 from routers.arquivo_router import router as arquivo_router
+from routers.auth_router import router as auth_router
+from routers.admin_usuarios_router import router as admin_usuarios_router
+from routers.admin_empresas_router import router as admin_empresas_router
+from routers.admin_perfis_router import router as admin_perfis_router
+from routers.efetivacao_router import router as efetivacao_router
+from routers.dashboard_router import router as dashboard_router
 
 app = FastAPI(
     title="Conciliação API",
@@ -24,7 +30,15 @@ Fluxo:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    # Allow any local dev port while keeping credentials support.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -33,3 +47,9 @@ app.include_router(empresa_router, prefix="/api")
 app.include_router(planodecontas_router, prefix="/api")
 app.include_router(conciliacao_router, prefix="/api")
 app.include_router(arquivo_router, prefix="/api")
+app.include_router(auth_router, prefix="/api")
+app.include_router(admin_usuarios_router, prefix="/api")
+app.include_router(admin_empresas_router, prefix="/api")
+app.include_router(admin_perfis_router, prefix="/api")
+app.include_router(efetivacao_router, prefix="/api")
+app.include_router(dashboard_router, prefix="/api")

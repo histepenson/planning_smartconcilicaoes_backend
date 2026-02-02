@@ -15,7 +15,17 @@
       "Bash(.venvScriptsactivate)",
       "Bash(uvicorn main:app:*)",
       "Bash(npm start)",
-      "Bash(./venv/Scripts/python:*)"
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(npm run:*)",
+      "Bash(dir:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(alembic current:*)",
+      "Bash(taskkill:*)",
+      "Bash(start /B python:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(c:/conciliacao-api/venv/Scripts/python.exe:*)",
+      "Bash(c:/conciliacao-api/venv/Scripts/alembic.exe upgrade:*)",
+      "Bash(\"c:/conciliacao-api/venv/Scripts/pip.exe\" install alembic)"
     ]
   }
 }
