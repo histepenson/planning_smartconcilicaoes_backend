@@ -25,7 +25,8 @@
       "Bash(powershell -Command:*)",
       "Bash(c:/conciliacao-api/venv/Scripts/python.exe:*)",
       "Bash(c:/conciliacao-api/venv/Scripts/alembic.exe upgrade:*)",
-      "Bash(\"c:/conciliacao-api/venv/Scripts/pip.exe\" install alembic)"
+      "Bash(\"c:/conciliacao-api/venv/Scripts/pip.exe\" install alembic)",
+      "Bash(ren:*)"
     ]
   }
 }

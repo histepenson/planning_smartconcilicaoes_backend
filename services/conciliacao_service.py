@@ -12,6 +12,11 @@ from tools.financeiro import (
     normalizar_planilha_financeira,
     normalizar_planilha_financeira_detalhada,
 )
+from tools.financeiro.factory import (
+    get_processador_por_nome,
+    TipoFinanceiro,
+    validar_layout_planilha,
+)
 from tools.mappers import map_origem_maior
 
 logger = logging.getLogger(__name__)
@@ -97,9 +102,41 @@ class ConciliacaoService:
         df_financeiro_raw = pd.DataFrame(request.base_origem.registros)
         logger.info("📊 Registros origem recebidos: %s", len(df_financeiro_raw))
 
-        financeiro_norm = normalizar_planilha_financeira(df_financeiro_raw)
-        financeiro_detalhado = normalizar_planilha_financeira_detalhada(df_financeiro_raw)
-        logger.info("✅ Financeiro normalizado: %s registros", len(financeiro_norm))
+        # Detectar tipo financeiro (contas_receber ou contas_pagar)
+        tipo_financeiro = request.parametros.get("tipo_financeiro", "contas_receber")
+        # Também verificar no base_origem.tipo para retrocompatibilidade
+        if hasattr(request.base_origem, "tipo") and request.base_origem.tipo:
+            tipo_financeiro = request.base_origem.tipo
+        logger.info("📋 Tipo financeiro: %s", tipo_financeiro)
+
+        # Validar layout do arquivo financeiro ANTES de processar
+        validacao_layout = validar_layout_planilha(df_financeiro_raw, tipo_financeiro)
+        if not validacao_layout.valido:
+            logger.error("❌ Layout inválido: %s", validacao_layout.mensagem)
+            raise ValueError(
+                f"Layout do arquivo financeiro inválido: {validacao_layout.mensagem} "
+                f"Colunas encontradas no arquivo: {validacao_layout.colunas_arquivo}"
+            )
+
+        if validacao_layout.avisos:
+            for aviso in validacao_layout.avisos:
+                logger.warning("⚠️ %s", aviso)
+
+        # Usar o processador apropriado via factory
+        try:
+            processador = get_processador_por_nome(tipo_financeiro)
+            financeiro_norm = processador.normalizar(df_financeiro_raw)
+            financeiro_detalhado = processador.normalizar_detalhado(df_financeiro_raw)
+            logger.info("✅ %s normalizado via factory: %s registros", tipo_financeiro.upper(), len(financeiro_norm))
+        except ValueError as e:
+            # Se for erro de layout, propagar com mensagem clara
+            if "coluna" in str(e).lower() or "encontrada" in str(e).lower():
+                raise ValueError(f"Erro no layout do arquivo financeiro: {str(e)}")
+            # Fallback para o método legado (contas a receber) se tipo não reconhecido
+            logger.warning("⚠️ Tipo '%s' não reconhecido, usando processador padrão (contas_receber)", tipo_financeiro)
+            financeiro_norm = normalizar_planilha_financeira(df_financeiro_raw)
+            financeiro_detalhado = normalizar_planilha_financeira_detalhada(df_financeiro_raw)
+            logger.info("✅ Financeiro normalizado (legado): %s registros", len(financeiro_norm))
 
         # ==========================
         # 2️⃣ NORMALIZAR CONTABILIDADE

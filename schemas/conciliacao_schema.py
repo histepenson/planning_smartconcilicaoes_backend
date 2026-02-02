@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class BaseOrigem(BaseModel):
     registros: List[Dict[str, Any]]
+    tipo: Optional[str] = None  # "contas_receber" ou "contas_pagar"
 
 
 class BaseContabilFiltrada(BaseModel):
