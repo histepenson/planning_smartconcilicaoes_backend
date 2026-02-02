@@ -31,10 +31,14 @@ Fluxo:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # Desenvolvimento
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        # Producao
+        "https://www.smartconciliacoes.com.br",
+        "https://smartconciliacoes.com.br",
     ],
     # Allow any local dev port while keeping credentials support.
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
