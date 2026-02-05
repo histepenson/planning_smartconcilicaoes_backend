@@ -42,11 +42,11 @@ app.add_middleware(
         "http://127.0.0.1:5173",
 
         # Produção (domínio final)
-        "https://www.smartconciliacoes.com.br",
-        "https://smartconciliacoes.com.br",
+        "https://planning.smartconciliacoes.com.br",
+        "https://planning.smartconciliacoes.com.br",
 
         # Produção (Railway)
-        "https://conciliacao-app-production.up.railway.app",
+        "planningsmartconcilicaoesbackend-planning.up.railway.app",
     ],
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
