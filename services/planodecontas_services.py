@@ -119,21 +119,64 @@ def validar_estrutura_arquivo(df: pd.DataFrame) -> Tuple[bool, List[str]]:
     return len(erros) == 0, erros
 
 
+def normalizar_colunas(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normaliza os nomes das colunas do Excel para o formato esperado.
+    Aceita variações com acentos, maiúsculas, espaços, underscores, etc.
+    """
+    import unicodedata
+    import re
+
+    def limpar_nome(nome: str) -> str:
+        nome = str(nome).strip().lower()
+        nome = unicodedata.normalize('NFKD', nome).encode('ascii', 'ignore').decode('ascii')
+        nome = re.sub(r'[\s\-]+', '_', nome)
+        nome = re.sub(r'[^a-z0-9_]', '', nome)
+        return nome
+
+    mapeamento = {
+        'conta_contabil': ['conta_contabil', 'contacontabil', 'conta', 'codigo', 'cod', 'codigo_conta', 'cod_conta'],
+        'descricao': ['descricao', 'desc', 'nome', 'nome_conta', 'descricao_conta'],
+        'tipo_conta': ['tipo_conta', 'tipoconta', 'tipo', 'tp_conta', 'tipo_de_conta'],
+        'conta_superior': ['conta_superior', 'contasuperior', 'conta_pai', 'pai', 'superior', 'conta_mae'],
+        'conciliavel': ['conciliavel', 'concilia', 'conc', 'reconciliavel'],
+    }
+
+    colunas_normalizadas = {limpar_nome(col): col for col in df.columns}
+    rename_map = {}
+
+    for campo_esperado, variacoes in mapeamento.items():
+        for variacao in variacoes:
+            if variacao in colunas_normalizadas:
+                rename_map[colunas_normalizadas[variacao]] = campo_esperado
+                break
+
+    if rename_map:
+        df = df.rename(columns=rename_map)
+        logger.info(f"Colunas mapeadas: {rename_map}")
+
+    return df
+
+
 def preparar_dados_importacao(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Separa as contas em sintéticas e analíticas,
     ordenadas corretamente para importação
-    
+
     Args:
         df: DataFrame com os dados do plano de contas
-        
+
     Returns:
         Tupla (df_sinteticas, df_analiticas)
     """
     logger.info(f"Preparando dados para importação...")
-    
+
     logger.info(f"Total de registros lidos: {len(df)}")
-    
+    logger.info(f"Colunas do arquivo: {list(df.columns)}")
+
+    # Normalizar nomes de colunas
+    df = normalizar_colunas(df)
+
     # Validar estrutura
     valido, erros = validar_estrutura_arquivo(df)
     if not valido:
@@ -167,14 +210,14 @@ def converter_conciliavel(valor) -> bool:
 
     valor_str = str(valor).strip().upper()
 
-    if valor_str == "1":
+    if valor_str in ("1", "SIM", "S", "YES", "Y", "TRUE", "VERDADEIRO"):
         return True
-    if valor_str == "0":
+    if valor_str in ("0", "NAO", "NÃO", "N", "NO", "FALSE", "FALSO", ""):
         return False
 
     raise ValueError(
         f"Valor inválido para conciliavel: '{valor}'. "
-        "Use apenas 1 ou 0."
+        "Use: 1/0, Sim/Não, S/N, True/False."
     )
 
 
