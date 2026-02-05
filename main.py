@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from routers.empresa_router import router as empresa_router
 from routers.planodecontas_router import router as planodecontas_router
 from routers.conciliacao_router import router as conciliacao_router
@@ -28,6 +29,8 @@ Fluxo:
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 app.add_middleware(
     CORSMiddleware,
