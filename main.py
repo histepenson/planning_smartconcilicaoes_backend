@@ -2,11 +2,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-from dotenv import load_dotenv
+from core.config import settings
 import traceback
-import os
-
-load_dotenv()
 from routers.empresa_router import router as empresa_router
 from routers.planodecontas_router import router as planodecontas_router
 from routers.conciliacao_router import router as conciliacao_router
@@ -38,15 +35,9 @@ Fluxo:
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
-cors_origins = [
-    value
-    for key, value in os.environ.items()
-    if key.startswith("CORS_ORIGIN") and value.strip()
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
