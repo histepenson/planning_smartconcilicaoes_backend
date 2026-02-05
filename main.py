@@ -1,6 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from dotenv import load_dotenv
+import traceback
+import os
+
+load_dotenv()
 from routers.empresa_router import router as empresa_router
 from routers.planodecontas_router import router as planodecontas_router
 from routers.conciliacao_router import router as conciliacao_router
@@ -32,27 +38,31 @@ Fluxo:
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
+cors_origins = [
+    value
+    for key, value in os.environ.items()
+    if key.startswith("CORS_ORIGIN") and value.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        # Desenvolvimento
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-
-        # Produção (domínio final)
-        "https://planning.smartconciliacoes.com.br",
-        "https://planning.smartconciliacoes.com.br",
-
-        # Produção (Railway)
-        "https://planningsmartconcilicaoesbackend-planning.up.railway.app",
-    ],
+    allow_origins=cors_origins,
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Captura exceções não tratadas para que a resposta 500
+    passe pelo CORSMiddleware e inclua os headers corretos."""
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Erro interno do servidor: {str(exc)}"},
+    )
 
 
 app.include_router(empresa_router, prefix="/api")

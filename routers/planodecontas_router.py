@@ -62,5 +62,9 @@ def route_importar_plano(file: UploadFile = File(...), empresa_id: int = 1, db: 
         df_sinteticas, df_analiticas = preparar_dados_importacao(df)
         resultado = importar_plano_contas(df_sinteticas, df_analiticas, empresa_id, db)
         return resultado
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao importar plano de contas: {str(e)}")
     finally:
         file.file.close()
