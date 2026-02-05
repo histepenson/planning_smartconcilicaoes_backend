@@ -37,16 +37,20 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        # Producao
+
+        # Produção (domínio final)
         "https://www.smartconciliacoes.com.br",
         "https://smartconciliacoes.com.br",
+
+        # Produção (Railway)
+        "https://conciliacao-app-production.up.railway.app",
     ],
-    # Allow any local dev port while keeping credentials support.
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(empresa_router, prefix="/api")
 app.include_router(planodecontas_router, prefix="/api")
