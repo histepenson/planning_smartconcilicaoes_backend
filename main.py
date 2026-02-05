@@ -46,7 +46,7 @@ app.add_middleware(
         "https://planning.smartconciliacoes.com.br",
 
         # Produção (Railway)
-        "planningsmartconcilicaoesbackend-planning.up.railway.app",
+        "https://planningsmartconcilicaoesbackend-planning.up.railway.app",
     ],
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
