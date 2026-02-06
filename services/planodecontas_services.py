@@ -1,6 +1,7 @@
 # services/planodecontas_services.py
 from sqlalchemy.orm import Session
 from models.planodecontas import PlanoDeContas
+from models.conciliacao import Conciliacao
 from datetime import datetime, timezone
 from typing import List, Dict, Tuple, Optional
 import logging
@@ -181,21 +182,31 @@ def preparar_dados_importacao(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     valido, erros = validar_estrutura_arquivo(df)
     if not valido:
         raise ValueError(f"Erro na validação do arquivo:\n" + "\n".join(erros))
-    
+
+    # Normalizar conta_contabil para string antes de deduplicar
+    df['conta_contabil'] = df['conta_contabil'].astype(str).str.strip()
+
+    # Remover contas duplicadas (manter a última ocorrência)
+    total_antes = len(df)
+    df = df.drop_duplicates(subset=['conta_contabil'], keep='last')
+    duplicatas_removidas = total_antes - len(df)
+    if duplicatas_removidas > 0:
+        logger.warning(f"Removidas {duplicatas_removidas} contas duplicadas do arquivo")
+
     # Limpar espaços em branco da conta_superior
     df['conta_superior'] = df['conta_superior'].astype(str).str.strip()
     df.loc[df['conta_superior'] == '', 'conta_superior'] = None
-    
+
     # Ordenar hierarquicamente
     df_ordenado = ordenar_contas_hierarquicamente(df)
-    
+
     # Separar sintéticas e analíticas
     df_sinteticas = df_ordenado[df_ordenado['tipo_conta'] == 1].copy()
     df_analiticas = df_ordenado[df_ordenado['tipo_conta'] == 2].copy()
-    
+
     logger.info(f"Contas sintéticas: {len(df_sinteticas)}")
     logger.info(f"Contas analíticas: {len(df_analiticas)}")
-    
+
     return df_sinteticas, df_analiticas
 
 def converter_conciliavel(valor) -> bool:
@@ -244,10 +255,36 @@ def importar_plano_contas(df_sinteticas: pd.DataFrame, df_analiticas: pd.DataFra
     logger.info("="*80)
     
     try:
+        # Verificar contas existentes da empresa
+        contas_existentes = db.query(PlanoDeContas).filter(
+            PlanoDeContas.empresa_id == empresa_id
+        ).count()
+
+        if contas_existentes > 0:
+            # Verificar se há conciliações vinculadas antes de deletar
+            conciliacoes_vinculadas = db.query(Conciliacao).filter(
+                Conciliacao.empresa_id == empresa_id
+            ).count()
+
+            if conciliacoes_vinculadas > 0:
+                raise ValueError(
+                    f"Não é possível reimportar o plano de contas: existem {conciliacoes_vinculadas} "
+                    f"conciliação(ões) vinculada(s) a esta empresa. "
+                    f"Remova as conciliações antes de reimportar."
+                )
+
+            logger.info(f"Removendo {contas_existentes} contas existentes da empresa {empresa_id} para reimportação...")
+            db.query(PlanoDeContas).filter(
+                PlanoDeContas.empresa_id == empresa_id
+            ).delete(synchronize_session=False)
+            db.flush()
+            logger.info(f"✓ Contas existentes removidas")
+
         estatisticas = {
             'total_contas': len(df_sinteticas) + len(df_analiticas),
             'sinteticas_importadas': 0,
             'analiticas_importadas': 0,
+            'contas_removidas': contas_existentes,
             'erros': []
         }
         
