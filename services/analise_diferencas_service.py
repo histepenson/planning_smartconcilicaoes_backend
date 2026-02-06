@@ -236,6 +236,8 @@ class AnaliseDiferencasService:
             lancamentos_razao_detalhes: List[Dict[str, Any]] = []
             lancamentos_financeiro_detalhes: List[Dict[str, Any]] = []
             lancamentos_razao_sem_financeiro: List[Dict[str, Any]] = []
+            registros_match_financeiro: List[Dict[str, Any]] = []
+            registros_match_contabilidade: List[Dict[str, Any]] = []
             sem_lancamentos_razao = False
             nota_razao = ""
 
@@ -541,6 +543,42 @@ class AnaliseDiferencasService:
                     lancamentos_credito, diferenca, "C"
                 )
 
+            # Registros individuais de ambas as bases (para todos os tipos)
+            status_registro = "conciliado" if tipo == "CONCILIADO" else "divergente"
+
+            # Financeiro detalhado
+            if df_financeiro_detalhado is not None and not df_financeiro_detalhado.empty:
+                if "codigo" in df_financeiro_detalhado.columns:
+                    matches_fin_det = df_financeiro_detalhado[
+                        df_financeiro_detalhado["codigo"].astype(str).str.strip() == codigo
+                    ]
+                    for _, r in matches_fin_det.iterrows():
+                        prf = r.get("prf_numero", "")
+                        parcela_val = r.get("parcela", "")
+                        doc_parts = []
+                        if prf not in [None, ""] and not pd.isna(prf):
+                            doc_parts.append(str(prf).strip())
+                        if parcela_val not in [None, ""] and not pd.isna(parcela_val):
+                            p_str = str(parcela_val).strip()
+                            if p_str and p_str not in doc_parts:
+                                doc_parts.append(p_str)
+                        registros_match_financeiro.append({
+                            "descricao": str(r.get("cliente", "")).strip(),
+                            "valor": round(float(r.get("valor", 0) or 0), 2),
+                            "data_emissao": self._formatar_data(r.get("data_emissao", "")),
+                            "documento": "-".join(doc_parts),
+                            "status": status_registro,
+                        })
+
+            # Contabilidade
+            matches_cont_det = df_cont[df_cont["codigo"].astype(str).str.strip() == codigo]
+            for _, r in matches_cont_det.iterrows():
+                registros_match_contabilidade.append({
+                    "descricao": str(r.get("cliente", "")).strip(),
+                    "valor": round(float(r.get("valor", 0) or 0), 2),
+                    "status": status_registro,
+                })
+
             analises.append(
                 {
                     "codigo": codigo,
@@ -556,6 +594,8 @@ class AnaliseDiferencasService:
                     if lancamentos_razao_detalhes
                     else lancamentos_razao_sem_financeiro,
                     "lancamentos_financeiro_detalhes": lancamentos_financeiro_detalhes,
+                    "registros_match_financeiro": registros_match_financeiro,
+                    "registros_match_contabilidade": registros_match_contabilidade,
                     "sem_lancamentos_razao": sem_lancamentos_razao,
                     "nota_razao": nota_razao,
                 }
@@ -595,57 +635,48 @@ class AnaliseDiferencasService:
         if not s:
             return ""
 
-        digitos = re.sub(r"\D+", "", s)
-        if not digitos:
+        # Usa separador '-' para dividir base e loja (tamanho variável)
+        # Sem separador: todos os caracteres formam o código completo
+        partes = s.split("-")
+        base = re.sub(r"[^a-zA-Z0-9]", "", partes[0])
+
+        if not base:
             return ""
 
-        if len(digitos) >= 8:
-            base = digitos[:6]
-            loja = digitos[6:8]
-        elif len(digitos) >= 6:
-            base = digitos[:6]
-            loja = "00"
-        else:
-            base = digitos.zfill(6)
-            loja = "00"
+        loja = ""
+        if len(partes) >= 2:
+            loja = re.sub(r"\D+", "", partes[1])
 
         return f"C{base}{loja}"
 
     def _normalizar_codigo_numerico(self, valor: object) -> str:
-        """Normaliza qualquer valor para apenas dígitos (sem zeros à esquerda)."""
+        """Normaliza código preservando prefixo C/F e letras, removendo apenas caracteres especiais."""
         if pd.isna(valor):
             return ""
         s = str(valor).strip()
         if not s:
             return ""
-        digitos = re.sub(r"\D+", "", s)
-        return digitos.lstrip("0") or "0"
+        # Mantém letras + dígitos (incluindo prefixo C/F que faz parte do código)
+        clean = re.sub(r"[^a-zA-Z0-9]", "", s)
+        return clean
 
     def _gerar_variacoes_codigo(self, codigo: str) -> List[str]:
         """
         Gera variações do código para busca flexível.
-        Ex: C00060801 -> ['C00060801', '00060801', '0060801', '060801', '60801', '6080100', '60801']
+        Suporta códigos de tamanho variável (base e loja).
+        Ex: C0170436181 -> ['C0170436181', '0170436181', '170436181']
         """
         variacoes = [codigo]
 
-        # Remove o prefixo C
-        if codigo.startswith("C"):
-            sem_c = codigo[1:]
-            variacoes.append(sem_c)
+        # Remove o prefixo C ou F
+        if codigo and codigo[0] in ("C", "F"):
+            sem_prefixo = codigo[1:]
+            variacoes.append(sem_prefixo)
 
-            # Remove zeros à esquerda progressivamente
-            stripped = sem_c.lstrip("0")
+            # Remove zeros à esquerda
+            stripped = sem_prefixo.lstrip("0")
             if stripped:
                 variacoes.append(stripped)
-
-            # Separa base e loja
-            if len(sem_c) >= 8:
-                base = sem_c[:6]
-                loja = sem_c[6:8]
-                variacoes.append(base)
-                variacoes.append(base.lstrip("0"))
-                if loja != "00":
-                    variacoes.append(f"{base.lstrip('0')}{loja}")
 
         return list(set(variacoes))
 

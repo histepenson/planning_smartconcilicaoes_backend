@@ -57,34 +57,10 @@ def normalizar_planilha_contabilidade(entrada):
     df_norm["cliente"] = df[col_cliente] if col_cliente else None
 
     # ==========================
-    # 4️⃣ NORMALIZAR CÓDIGO (ALINHAR COM FINANCEIRO)
+    # 4️⃣ CÓDIGO (JÁ VEM FORMATADO DA CONTABILIDADE)
     # ==========================
-    def normalizar_codigo(v: object) -> str:
-        if pd.isna(v):
-            return ""
-        s = str(v).strip()
-        if not s:
-            return ""
-
-        # Remove tudo que não for dígito
-        digitos = re.sub(r"\D+", "", s)
-        if not digitos:
-            return ""
-
-        # Esperado no financeiro: base 6 + loja 2
-        if len(digitos) >= 8:
-            base = digitos[:6]
-            loja = digitos[6:8]
-        elif len(digitos) >= 6:
-            base = digitos[:6]
-            loja = "00"
-        else:
-            base = digitos.zfill(6)
-            loja = "00"
-
-        return f"C{base}{loja}"
-
-    df_norm["codigo"] = df_norm["codigo_raw"].apply(normalizar_codigo)
+    df_norm["codigo"] = df_norm["codigo_raw"].astype(str).str.strip()
+    df_norm = df_norm[df_norm["codigo"].str.len() > 0].copy()
 
     # ==========================
     # 5️⃣ CONVERTER VALOR
