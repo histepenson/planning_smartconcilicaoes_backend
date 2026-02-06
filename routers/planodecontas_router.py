@@ -1,5 +1,5 @@
 # routers/planodecontas_router.py
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from db import get_db
@@ -55,7 +55,7 @@ def route_deletar_conta(id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/importar", response_model=dict)
-def route_importar_plano(file: UploadFile = File(...), empresa_id: int = 1, db: Session = Depends(get_db)):
+def route_importar_plano(file: UploadFile = File(...), empresa_id: int = Form(...), db: Session = Depends(get_db)):
     try:
         contents = file.file.read()
         df = pd.read_excel(io.BytesIO(contents))
