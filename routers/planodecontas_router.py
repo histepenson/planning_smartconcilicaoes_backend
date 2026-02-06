@@ -58,7 +58,7 @@ def route_deletar_conta(id: int, db: Session = Depends(get_db)):
 def route_importar_plano(file: UploadFile = File(...), empresa_id: int = Form(...), db: Session = Depends(get_db)):
     try:
         contents = file.file.read()
-        df = pd.read_excel(io.BytesIO(contents))
+        df = pd.read_excel(io.BytesIO(contents), dtype=str)
         df_sinteticas, df_analiticas = preparar_dados_importacao(df)
         resultado = importar_plano_contas(df_sinteticas, df_analiticas, empresa_id, db)
         return resultado

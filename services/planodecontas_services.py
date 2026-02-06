@@ -113,7 +113,7 @@ def validar_estrutura_arquivo(df: pd.DataFrame) -> Tuple[bool, List[str]]:
     
     # Verificar tipos de conta válidos
     if 'tipo_conta' in df.columns:
-        tipos_invalidos = df[~df['tipo_conta'].isin([1, 2])]['tipo_conta'].unique()
+        tipos_invalidos = df[~df['tipo_conta'].isin(['1', '2', 1, 2])]['tipo_conta'].unique()
         if len(tipos_invalidos) > 0:
             erros.append(f"Tipos de conta inválidos encontrados: {tipos_invalidos}")
     
@@ -183,8 +183,12 @@ def preparar_dados_importacao(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     if not valido:
         raise ValueError(f"Erro na validação do arquivo:\n" + "\n".join(erros))
 
-    # Normalizar conta_contabil para string antes de deduplicar
-    df['conta_contabil'] = df['conta_contabil'].astype(str).str.strip()
+    # Normalizar conta_contabil como string
+    df['conta_contabil'] = df['conta_contabil'].str.strip()
+
+    # Normalizar conta_superior como string (vazio/NaN → None)
+    df['conta_superior'] = df['conta_superior'].str.strip()
+    df.loc[df['conta_superior'].isna() | (df['conta_superior'] == ''), 'conta_superior'] = None
 
     # Remover contas duplicadas (manter a última ocorrência)
     total_antes = len(df)
@@ -193,16 +197,15 @@ def preparar_dados_importacao(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFr
     if duplicatas_removidas > 0:
         logger.warning(f"Removidas {duplicatas_removidas} contas duplicadas do arquivo")
 
-    # Limpar espaços em branco da conta_superior
-    df['conta_superior'] = df['conta_superior'].astype(str).str.strip()
-    df.loc[df['conta_superior'] == '', 'conta_superior'] = None
-
     # Ordenar hierarquicamente
     df_ordenado = ordenar_contas_hierarquicamente(df)
 
+    # Normalizar tipo_conta para string
+    df_ordenado['tipo_conta'] = df_ordenado['tipo_conta'].astype(str).str.strip()
+
     # Separar sintéticas e analíticas
-    df_sinteticas = df_ordenado[df_ordenado['tipo_conta'] == 1].copy()
-    df_analiticas = df_ordenado[df_ordenado['tipo_conta'] == 2].copy()
+    df_sinteticas = df_ordenado[df_ordenado['tipo_conta'] == '1'].copy()
+    df_analiticas = df_ordenado[df_ordenado['tipo_conta'] == '2'].copy()
 
     logger.info(f"Contas sintéticas: {len(df_sinteticas)}")
     logger.info(f"Contas analíticas: {len(df_analiticas)}")
@@ -307,7 +310,7 @@ def importar_plano_contas(df_sinteticas: pd.DataFrame, df_analiticas: pd.DataFra
                 db_conta.conta_contabil = str(conta['conta_contabil'])
                 db_conta.descricao = conta['descricao']
                 db_conta.conciliavel = converter_conciliavel(conta['conciliavel'])
-                db_conta.tipo_conta = str(conta['tipo_conta'])
+                db_conta.tipo_conta = str(conta['tipo_conta']).strip()
                 db_conta.conta_superior = conta_superior
                 db_conta.empresa_id = empresa_id
                 
@@ -343,8 +346,8 @@ def importar_plano_contas(df_sinteticas: pd.DataFrame, df_analiticas: pd.DataFra
                 db_conta = PlanoDeContas()
                 db_conta.conta_contabil = str(conta['conta_contabil'])
                 db_conta.descricao = conta['descricao']
-                db_conta.conciliavel = bool(conta['conciliavel'])
-                db_conta.tipo_conta = str(conta['tipo_conta'])
+                db_conta.conciliavel = converter_conciliavel(conta['conciliavel'])
+                db_conta.tipo_conta = str(conta['tipo_conta']).strip()
                 db_conta.conta_superior = conta_superior
                 db_conta.empresa_id = empresa_id
                 
